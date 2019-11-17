@@ -24,6 +24,10 @@ def load_data():
     #number of classes
     num_classes=20
 
+    class_list = ['owl', 'galaxy', 'lightning', 'wine-bottle', 't-shirt', 'waterfall', 'sword', 'school-bus', 'calculator',
+                 'sheet-music', 'airplanes', 'lightbulb' , 'skyscraper', 'mountain-bike', 'fireworks', 'computer-monitor',
+                 'bear', 'grand-piano', 'kangaroo', 'laptop']
+
     train_data_gen = ImageDataGenerator(rotation_range=10,
                                             width_shift_range=10,
                                             height_shift_range=10,
@@ -32,10 +36,12 @@ def load_data():
                                             vertical_flip=True,
                                             fill_mode='constant',
                                             cval=0,
-                                            rescale=1./255,)
+                                            rescale=1./255,
+                                            )
 
     train_gen = train_data_gen.flow_from_directory(training_dir,batch_size=bs, target_size=(img_h, img_w),
-                                                   class_mode='categorical',shuffle=True,seed=SEED)  # targets are directly converted into one-hot vectors
+                                                   class_mode='categorical',shuffle=True,seed=SEED,
+                                                   classes=class_list)  # targets are directly converted into one-hot vectors
 
     train_dataset = tf.data.Dataset.from_generator(lambda: train_gen,
                                                output_types=(tf.float32, tf.float32),
@@ -43,15 +49,18 @@ def load_data():
 
     train_dataset = train_dataset.repeat()
 
-    """iterator = iter(train_dataset)
-
+    
+    iterator = iter(train_dataset)
+    
     for _ in range(1000):
-        augmented_img, target = next(iterator)
-        
+        augmented_img, target = next(iterator)    
         augmented_img = augmented_img[0]   # First element
         augmented_img = augmented_img * 255  # denormalize
-   
+
         plt.imshow(np.uint8(augmented_img))
-        plt.show()"""
+        print(target)
+        plt.show() 
+
+        
 
     return train_dataset
