@@ -21,6 +21,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Classificator.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="DeepLearnCompetition.py" />
     <Compile Include="Utils.py">
       <SubType>Code</SubType>

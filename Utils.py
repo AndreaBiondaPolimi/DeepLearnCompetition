@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 
-def load_data():
+def load_dataset():
     # Set the seed for random operations. 
     # This let our experiments to be reproducible. 
     SEED = 1234
@@ -15,7 +15,7 @@ def load_data():
     training_dir = "Classification_Dataset\\training"
 
     # Batch size
-    bs = 8
+    bs = 16
 
     # img shape
     img_h = 512
@@ -41,18 +41,28 @@ def load_data():
 
     train_gen = train_data_gen.flow_from_directory(training_dir,batch_size=bs, target_size=(img_h, img_w),
                                                    class_mode='categorical',shuffle=True,seed=SEED,
-                                                   classes=class_list)  # targets are directly converted into one-hot vectors
+                                                   classes=class_list,subset='training')  # targets are directly converted into one-hot vectors
+
+    valid_gen = train_data_gen.flow_from_directory(training_dir,batch_size=bs, target_size=(img_h, img_w),
+                                                   class_mode='categorical',shuffle=True,seed=SEED,
+                                                   classes=class_list,subset='validation')  # targets are directly converted into one-hot vectors
+
 
     train_dataset = tf.data.Dataset.from_generator(lambda: train_gen,
                                                output_types=(tf.float32, tf.float32),
                                                output_shapes=([None, img_h, img_w, 3], [None, num_classes]))
 
+    valid_dataset = tf.data.Dataset.from_generator(lambda: train_gen,
+                                               output_types=(tf.float32, tf.float32),
+                                               output_shapes=([None, img_h, img_w, 3], [None, num_classes]))
+
     train_dataset = train_dataset.repeat()
+    valid_dataset = valid_dataset.repeat()
 
     
-    iterator = iter(train_dataset)
+    """iterator = iter(train_dataset)
     
-    for _ in range(1000):
+    for _ in range(3):
         augmented_img, target = next(iterator)    
         augmented_img = augmented_img[0]   # First element
         augmented_img = augmented_img * 255  # denormalize
@@ -61,6 +71,18 @@ def load_data():
         print(target)
         plt.show() 
 
+    iterator = iter(valid_dataset)
+    
+    for _ in range(3):
+        augmented_img, target = next(iterator)    
+        augmented_img = augmented_img[0]   # First element
+        augmented_img = augmented_img * 255  # denormalize
+
+        plt.imshow(np.uint8(augmented_img))
+        print(target)
+        plt.show() """
+    
+
         
 
-    return train_dataset
+    return train_dataset,valid_dataset
