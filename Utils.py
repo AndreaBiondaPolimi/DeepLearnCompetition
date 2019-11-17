@@ -32,9 +32,9 @@ def load_data():
                                             vertical_flip=True,
                                             fill_mode='constant',
                                             cval=0,
-                                            rescale=1./255)
+                                            rescale=1./255,)
 
-    train_gen = train_data_gen.flow_from_directory(training_dir,batch_size=bs, 
+    train_gen = train_data_gen.flow_from_directory(training_dir,batch_size=bs, target_size=(img_h, img_w),
                                                    class_mode='categorical',shuffle=True,seed=SEED)  # targets are directly converted into one-hot vectors
 
     train_dataset = tf.data.Dataset.from_generator(lambda: train_gen,
@@ -43,9 +43,9 @@ def load_data():
 
     train_dataset = train_dataset.repeat()
 
-    iterator = iter(train_dataset)
+    """iterator = iter(train_dataset)
 
-    """for _ in range(1000):
+    for _ in range(1000):
         augmented_img, target = next(iterator)
         
         augmented_img = augmented_img[0]   # First element
@@ -53,3 +53,5 @@ def load_data():
    
         plt.imshow(np.uint8(augmented_img))
         plt.show()"""
+
+    return train_dataset
