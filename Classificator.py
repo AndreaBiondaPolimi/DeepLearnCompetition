@@ -1,7 +1,6 @@
 import tensorflow as tf
 
-from tensorflow import keras
-from keras import Sequential
+from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, Dense, MaxPool2D, Dropout, Flatten
 from tensorflow.keras.optimizers import Adam
 
