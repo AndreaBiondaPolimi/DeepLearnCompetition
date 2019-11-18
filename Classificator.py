@@ -1,12 +1,12 @@
 import tensorflow as tf
 
 from tensorflow import keras
-from keras import Sequential
+from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, Dense, MaxPool2D, Dropout, Flatten
 from tensorflow.keras.optimizers import Adam
 
 
-def lenet_mod_model(input_shape,output_shape):
+def lenet_mod_model(input_shape, output_shape):
 
     model = Sequential()
     model.add(Conv2D(filters=32, kernel_size=(5,5), padding='same', activation='relu', input_shape=input_shape))
@@ -27,14 +27,15 @@ def lenet_mod_model(input_shape,output_shape):
     model.add(Dense(output_shape, activation='softmax'))
 
     model.summary()
+    
 
     model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=Adam(lr=5e-4))
 
     return model
 
-def train (model,train_dataset,valid_dataset, epochs):
+def train (model, train_dataset, valid_dataset, epochs):
     model.fit(x=train_dataset,
           epochs=100,  #### set repeat in training dataset
-          steps_per_epoch=1,
+          steps_per_epoch=100,
           validation_data=valid_dataset,
-          validation_steps=2)
+          validation_steps=20)
