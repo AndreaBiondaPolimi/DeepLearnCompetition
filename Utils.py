@@ -15,7 +15,7 @@ def load_dataset():
     training_dir = "Classification_Dataset\\training"
 
     # Batch size
-    bs = 8
+    bs = 16
 
     # img shape
     img_h = 512
@@ -59,7 +59,7 @@ def load_dataset():
     train_dataset = train_dataset.repeat()
     valid_dataset = valid_dataset.repeat()
 
-    
+
 
     
     """iterator = iter(train_dataset)
