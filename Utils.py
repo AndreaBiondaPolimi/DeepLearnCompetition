@@ -1,9 +1,18 @@
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
+import os, os.path
+import cv2
 
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.preprocessing.image import img_to_array
+from tensorflow.keras.backend import resize_images
+from datetime import datetime
 
+
+class_list = ['owl', 'galaxy', 'lightning', 'wine-bottle', 't-shirt', 'waterfall', 'sword', 'school-bus', 'calculator',
+                 'sheet-music', 'airplanes', 'lightbulb' , 'skyscraper', 'mountain-bike', 'fireworks', 'computer-monitor',
+                 'bear', 'grand-piano', 'kangaroo', 'laptop']
 
 def load_dataset():
     # Set the seed for random operations. 
@@ -23,10 +32,6 @@ def load_dataset():
 
     #number of classes
     num_classes=20
-
-    class_list = ['owl', 'galaxy', 'lightning', 'wine-bottle', 't-shirt', 'waterfall', 'sword', 'school-bus', 'calculator',
-                 'sheet-music', 'airplanes', 'lightbulb' , 'skyscraper', 'mountain-bike', 'fireworks', 'computer-monitor',
-                 'bear', 'grand-piano', 'kangaroo', 'laptop']
 
     train_data_gen = ImageDataGenerator(rotation_range=10,
                                             width_shift_range=10,
@@ -60,8 +65,6 @@ def load_dataset():
     valid_dataset = valid_dataset.repeat()
 
 
-
-    
     """iterator = iter(train_dataset)
     
     for _ in range(3):
@@ -83,8 +86,52 @@ def load_dataset():
         plt.imshow(np.uint8(augmented_img))
         print(target)
         plt.show() """
-    
-
-        
 
     return train_dataset,valid_dataset
+
+
+
+
+def test_model(model,to_show):
+    path = 'Classification_Dataset\\test'
+    model.load_weights('classification.h5')
+    #image_filenames = next(os.walk('../Classification_Dataset/test))[2]
+
+    results = {}
+    for f in os.listdir(path):
+        #Image loading
+        ext = os.path.splitext(f)[1]
+        img = cv2.imread(os.path.join(path,f))
+        img = cv2.resize(img, (512, 512))
+        
+        #Image preparation
+        img_array = img_to_array (img)
+        img_array = img_array / 255 
+        img_array = np.expand_dims(img_array, 0) 
+
+        #Image prediction
+        res = model.predict(img_array)
+        prediction = np.argmax(res) 
+
+        results[str(f)] = int(prediction)
+        #results = results + {str(f): int(prediction)}
+
+        if (to_show == True):
+            plt.imshow(np.uint8(img))
+            plt.title(class_list[prediction])
+            plt.show()
+    
+    create_csv (results,'')
+    #print (results)
+
+def create_csv(results, results_dir='./'):
+
+    csv_fname = 'results_'
+    csv_fname += datetime.now().strftime('%b%d_%H-%M-%S') + '.csv'
+
+    with open(os.path.join(results_dir, csv_fname), 'w') as f:
+
+        f.write('Id,Category\n')
+
+        for key, value in results.items():
+            f.write(key + ',' + str(value) + '\n')
