@@ -59,6 +59,8 @@ def load_dataset():
     train_dataset = train_dataset.repeat()
     valid_dataset = valid_dataset.repeat()
 
+
+
     
     """iterator = iter(train_dataset)
     
