@@ -27,13 +27,15 @@ def lenet_mod_model(input_shape, output_shape):
 
     model.summary()
     
-    model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=Adam(lr=5e-4))
+    model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=Adam())
 
     return model
 
 def train (model, train_dataset, valid_dataset, epochs):
     model.fit(x=train_dataset,
-          epochs=200,  #### set repeat in training dataset
-          steps_per_epoch=100,
+          epochs=100,  #### set repeat in training dataset
+          steps_per_epoch=30,
           validation_data=valid_dataset,
-          validation_steps=50)
+          validation_steps=1)
+
+    model.save('classification.h5')
