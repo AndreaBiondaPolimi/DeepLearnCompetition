@@ -34,8 +34,8 @@ def lenet_mod_model(input_shape, output_shape):
 def train (model, train_dataset, valid_dataset, epochs):
     model.fit(x=train_dataset,
           epochs=100,  #### set repeat in training dataset
-          steps_per_epoch=30,
+          steps_per_epoch=80,
           validation_data=valid_dataset,
-          validation_steps=1)
+          validation_steps=50)
 
     model.save('classification.h5')
