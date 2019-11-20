@@ -3,3 +3,9 @@
 
 #ignore all csv files
 *.csv
+
+#ignore ide folders
+.vscode/
+
+#ignore complete imgs folders
+Classification_Dataset/complete
