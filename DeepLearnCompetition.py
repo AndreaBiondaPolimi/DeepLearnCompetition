@@ -4,10 +4,19 @@ import Classificator as cl
 
 
 print (tf.__version__)
-train_dataset,valid_dataset = util.load_dataset()
 
-model = cl.lenet_mod_model((512,512,3),20)
+img_h = 256
+img_w = 256
 
-cl.train (model,train_dataset,valid_dataset,500)
+train_dataset,valid_dataset = util.load_dataset(img_h,img_w)
 
-util.test_model (model,False)
+
+
+#model = cl.lenet_mod_model((512,512,3),20)
+
+model = cl.ResNet50((img_h,img_w,3),20)
+
+
+cl.train (model,train_dataset,valid_dataset,300)
+
+util.test_model (model,False,img_h,img_w)

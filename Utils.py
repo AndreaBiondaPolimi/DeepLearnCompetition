@@ -14,7 +14,7 @@ class_list = ['owl', 'galaxy', 'lightning', 'wine-bottle', 't-shirt', 'waterfall
                  'sheet-music', 'airplanes', 'lightbulb' , 'skyscraper', 'mountain-bike', 'fireworks', 'computer-monitor',
                  'bear', 'grand-piano', 'kangaroo', 'laptop']
 
-def load_dataset():
+def load_dataset(img_h,img_w):
     # Set the seed for random operations. 
     # This let our experiments to be reproducible. 
     SEED = 1234
@@ -29,8 +29,8 @@ def load_dataset():
     bs = 16
 
     # img shape
-    img_h = 512
-    img_w = 512
+    #img_h = 512
+    #img_w = 512
 
     #number of classes
     num_classes=20
@@ -106,7 +106,7 @@ def load_dataset():
 
 
 
-def test_model(model,to_show):
+def test_model(model,to_show,img_h,img_w):
     path = 'Classification_Dataset\\test'
     model.load_weights('classification.h5')
     #image_filenames = next(os.walk('../Classification_Dataset/test))[2]
@@ -116,7 +116,7 @@ def test_model(model,to_show):
         #Image loading
         ext = os.path.splitext(f)[1]
         img = cv2.imread(os.path.join(path,f))
-        img = cv2.resize(img, (512, 512))
+        img = cv2.resize(img, (img_h, img_w))
         
         #Image preparation
         img_array = img_to_array (img)
