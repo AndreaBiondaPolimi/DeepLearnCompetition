@@ -5,8 +5,8 @@ import Classificator as cl
 
 print (tf.__version__)
 
-img_h = 256
-img_w = 256
+img_h = 512
+img_w = 512
 
 train_dataset,valid_dataset = util.load_dataset(img_h,img_w)
 
