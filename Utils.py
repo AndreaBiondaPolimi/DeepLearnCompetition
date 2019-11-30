@@ -21,8 +21,8 @@ def load_dataset(img_h,img_w):
     tf.random.set_seed(SEED)  
 
     #Target directory
-    training_dir = "Classification_Dataset\\training"
-    validation_dir = "Classification_Dataset\\validation"
+    training_dir = "Classification_Dataset\\complete"
+    #validation_dir = "Classification_Dataset\\validation"
 
 
     # Batch size
@@ -44,26 +44,16 @@ def load_dataset(img_h,img_w):
                                             fill_mode='constant',
                                             cval=0,
                                             rescale=1./255,
-                                            )
-
-    valid_data_gen = ImageDataGenerator(rotation_range=10,
-                                            width_shift_range=10,
-                                            height_shift_range=10,
-                                            zoom_range=0.3,
-                                            horizontal_flip=True,
-                                            vertical_flip=True,
-                                            fill_mode='constant',
-                                            cval=0,
-                                            rescale=1./255,
+                                            validation_split=0.3
                                             )
 
     train_gen = train_data_gen.flow_from_directory(training_dir,batch_size=bs, target_size=(img_h, img_w),
                                                    class_mode='categorical',shuffle=True,seed=SEED,
-                                                   classes=class_list)  # targets are directly converted into one-hot vectors
+                                                   classes=class_list, subset='training')  # targets are directly converted into one-hot vectors
 
-    valid_gen = valid_data_gen.flow_from_directory(validation_dir,batch_size=bs, target_size=(img_h, img_w),
+    valid_gen = train_data_gen.flow_from_directory(training_dir,batch_size=bs, target_size=(img_h, img_w),
                                                    class_mode='categorical',shuffle=False,seed=SEED,
-                                                   classes=class_list)  # targets are directly converted into one-hot vectors
+                                                   classes=class_list, subset='validation')  # targets are directly converted into one-hot vectors
 
 
     train_dataset = tf.data.Dataset.from_generator(lambda: train_gen,
@@ -108,7 +98,7 @@ def load_dataset(img_h,img_w):
 
 def test_model(model,to_show,img_h,img_w):
     path = 'Classification_Dataset\\test'
-    model.load_weights('classification.h5')
+    model.load_weights('model00000111.h5')
     #image_filenames = next(os.walk('../Classification_Dataset/test))[2]
 
     results = {}
@@ -149,3 +139,4 @@ def create_csv(results, results_dir='./'):
 
         for key, value in results.items():
             f.write(key + ',' + str(value) + '\n')
+

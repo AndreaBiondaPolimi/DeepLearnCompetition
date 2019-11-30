@@ -2,7 +2,8 @@ import tensorflow as tf
 
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.layers import Conv2D, Dense, MaxPool2D, Dropout, Flatten, BatchNormalization, Activation, add, ZeroPadding2D, Input, GlobalAveragePooling2D, MaxPooling2D
-from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.optimizers import Adam, RMSprop
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
 
 #Using a lenet model modified
@@ -146,17 +147,53 @@ def ResNet50(input_shape, output_shape):
     
     model.summary()
 
-    model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=Adam(lr=0.0001))
+    model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=Adam(lr=0.00005))
 
     return model
 
 
 
 def train (model, train_dataset, valid_dataset, epochs):
+    callbacks = []
+
+    #es_callback = EarlyStopping(monitor='val_loss', patience=70)
+    checkpoint = ModelCheckpoint('model{epoch:08d}.h5', period=1) 
+
+    #callbacks.append(es_callback)
+    callbacks.append(checkpoint)
+
+
     model.fit(x=train_dataset,
           epochs=epochs,  #### set repeat in training dataset
-          steps_per_epoch=100,
+          steps_per_epoch=50,
           validation_data=valid_dataset,
-          validation_steps=50)
+          validation_steps=20,
+          callbacks=callbacks)
 
     model.save('classification.h5')
+
+    
+
+from keras.models import model_from_json
+from tensorflow.keras.applications import ResNet50
+#from tensorflow.keras.applications.inception_v3 import InceptionV3
+
+def ResNet50_transf_learning (input_shape, output_shape):
+    #model = InceptionV3(weights='imagenet')
+    #input_tensor = Input(shape=input_shape)
+
+    model = ResNet50(input_shape=input_shape, weights='imagenet', include_top=False)
+
+    x = model.output
+    x = GlobalAveragePooling2D(name='avg_pool')(x)
+    x = Dense(output_shape, activation='softmax', name='fc1000')(x)
+
+    model = Model(inputs=model.input, outputs=x)
+    
+
+    model.summary()
+
+    #model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=Adam())
+    model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=Adam(lr=0.0005))
+
+    return model
