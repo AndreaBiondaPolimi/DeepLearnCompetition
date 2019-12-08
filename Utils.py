@@ -11,7 +11,7 @@ from datetime import datetime
 
 
 
-def load_dataset(img_h,img_w):
+def load_dataset(img_h, img_w, batch_size):
     # Set the seed for random operations. 
     # This let our experiments to be reproducible. 
     SEED = 1234
@@ -21,7 +21,7 @@ def load_dataset(img_h,img_w):
     dataset_dir = "Segmentation_Dataset"
 
     # Batch size
-    bs = 16
+    bs = batch_size
 
     #number of classes
     num_classes=2
@@ -69,7 +69,7 @@ def load_dataset(img_h,img_w):
                                                          target_size=(img_h, img_w),
                                                          batch_size=bs,
                                                          class_mode=None, # Because we have no class subfolders in this case
-                                                         #color_mode='greyscale',
+                                                         color_mode='grayscale',
                                                          shuffle=True,
                                                          interpolation='bilinear',
                                                          seed=SEED,
@@ -90,7 +90,7 @@ def load_dataset(img_h,img_w):
                                                          target_size=(img_h, img_w),
                                                          batch_size=bs,
                                                          class_mode=None, # Because we have no class subfolders in this case
-                                                         #color_mode='greyscale',
+                                                         color_mode='grayscale',
                                                          shuffle=True,
                                                          interpolation='bilinear',
                                                          seed=SEED,
@@ -104,13 +104,11 @@ def load_dataset(img_h,img_w):
 
     train_dataset = tf.data.Dataset.from_generator(lambda: train_gen,
                                                output_types=(tf.float32, tf.float32),
-                                               output_shapes=([None, img_h, img_w, 3], [None, img_h, img_w, 3]))
+                                               output_shapes=([None, img_h, img_w, 3], [None, img_h, img_w, 1]))
 
     valid_dataset = tf.data.Dataset.from_generator(lambda: valid_gen, 
                                                output_types=(tf.float32, tf.float32),
-                                               output_shapes=([None, img_h, img_w, 3], [None, img_h, img_w, 3]))
-
-
+                                               output_shapes=([None, img_h, img_w, 3], [None, img_h, img_w, 1]))
 
     def prepare_target(x_, y_):
         y_ = tf.cast(y_, tf.int32)
@@ -122,7 +120,7 @@ def load_dataset(img_h,img_w):
     valid_dataset = valid_dataset.map(prepare_target)
     valid_dataset = valid_dataset.repeat()
 
-
+    """
     
     iterator = iter(train_dataset)
     
@@ -140,7 +138,7 @@ def load_dataset(img_h,img_w):
         f.add_subplot(1,2, 1)
         plt.imshow(augmented_img)
         f.add_subplot(1,2, 2)
-        plt.imshow(target_img)
+        plt.imshow(np.reshape(target_img,(img_h,img_w)))
         plt.show(block=True)
         
 
@@ -160,9 +158,9 @@ def load_dataset(img_h,img_w):
         f.add_subplot(1,2, 1)
         plt.imshow(augmented_img)
         f.add_subplot(1,2, 2)
-        plt.imshow(target_img)
+        plt.imshow(np.reshape(target_img,(img_h,img_w)))
         plt.show(block=True)
-    
+    """
     
     return train_dataset,valid_dataset
 
