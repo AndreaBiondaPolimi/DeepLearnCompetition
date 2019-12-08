@@ -166,10 +166,9 @@ def load_dataset(img_h, img_w, batch_size):
 
 
 
-"""
 def test_model(model,to_show,img_h,img_w):
-    path = 'Classification_Dataset\\test'
-    model.load_weights('model00000111.h5')
+    path = 'Segmentation_Dataset\\test\\images\\img'
+    model.load_weights('classification.h5')
     #image_filenames = next(os.walk('../Classification_Dataset/test))[2]
 
     results = {}
@@ -186,28 +185,44 @@ def test_model(model,to_show,img_h,img_w):
 
         #Image prediction
         res = model.predict(img_array)
-        prediction = np.argmax(res) 
-
-        results[str(f)] = int(prediction)
-        #results = results + {str(f): int(prediction)}
+        
+        res[np.where(res < 0.5)] = 0
+        res[np.where(res >= 0.5)] = 1
+        
+        f_name = os.path.splitext(f)[0]
+        print(f_name)
+        results[str(f_name)] = rle_encode(res)
 
         if (to_show == True):
-            plt.imshow(np.uint8(img))
-            plt.title(class_list[prediction])
-            plt.show()
+            res = res * 255
+            f = plt.figure()
+            f.add_subplot(1,2, 1)
+            plt.imshow(img)
+            f.add_subplot(1,2, 2)
+            plt.imshow(np.reshape(res,(img_h,img_w)))
+            plt.show(block=True)
     
     create_csv (results,'')
     #print (results)
+
 
 def create_csv(results, results_dir='./'):
 
     csv_fname = 'results_'
     csv_fname += datetime.now().strftime('%b%d_%H-%M-%S') + '.csv'
 
-    with open(os.path.join(results_dir, csv_fname), 'w') as f:
+    with open(csv_fname, 'w') as f:
 
-        f.write('Id,Category\n')
+      f.write('ImageId,EncodedPixels,Width,Height\n')
 
-        for key, value in results.items():
-            f.write(key + ',' + str(value) + '\n')
-"""
+      for key, value in results.items():
+          f.write(key + ',' + str(value) + ',' + '256' + ',' + '256' + '\n')
+
+
+def rle_encode(img):
+      # Flatten column-wise
+      pixels = img.T.flatten()
+      pixels = np.concatenate([[0], pixels, [0]])
+      runs = np.where(pixels[1:] != pixels[:-1])[0] + 1
+      runs[1::2] -= runs[::2]
+      return ' '.join(str(x) for x in runs)
