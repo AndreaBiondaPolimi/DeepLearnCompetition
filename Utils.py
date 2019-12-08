@@ -166,60 +166,64 @@ def load_dataset(img_h, img_w, batch_size):
 
 
 
-"""
 def test_model(model,to_show,img_h,img_w):
-    path = "Segmentation_Dataset\\test"
-    
-    test_img_dir = os.path.join(test_dir, 'images', 'img')
+    path = 'Segmentation_Dataset\\test\\images\\img'
+    model.load_weights('classification.h5')
 
     results = {}
-    for img_filename in img_filenames:
-    
-        mask_filename = img_filename[:-4] + '.png'
+
+    for f in os.listdir(path):
+        #Image loading
+        ext = os.path.splitext(f)[1]
+        img = cv2.imread(os.path.join(path,f))
+        img = cv2.resize(img, (img_h,img_w))
+
+        #Image preparation
+        img_array = img_to_array (img)
+        img_array = img_array / 255 
+        img_array = np.expand_dims(img_array, 0) 
+
+        #Image prediction
+        res = model.predict(img_array)
         
-        img = Image.open(os.path.join(test_img_dir, img_filename))
+        res[np.where(res < 0.5)] = 0
+        res[np.where(res >= 0.5)] = 1
         
-        img_arr = np.expand_dims(np.array(img), 0)
-        
-        out_softmax = model.predict(x=img_arr / 255.)
-        
-        # Get predicted class as the index corresponding to the maximum value in the vector probability
-        predicted_class = tf.argmax(out_softmax, -1)
-        predicted_class = predicted_class[0]
-        
-        target = np.array(mask)
-        target -= 1    ## to get classes 0,1,2 instead of 1,2,3
-        
-        print(target.shape)
-        
-        # Assign colors (just for visualization)
-        target_img = np.zeros([target.shape[0], target.shape[1], 3])
-        prediction_img = np.zeros([target.shape[0], target.shape[1], 3])
-        
-        target_img[np.where(target == 0)] = colors_dict[0]
-        target_img[np.where(target == 1)] = colors_dict[1]
-        target_img[np.where(target == 2)] = colors_dict[2]
-        
-        prediction_img[np.where(predicted_class == 0)] = colors_dict[0]
-        prediction_img[np.where(predicted_class == 1)] = colors_dict[1]
-        prediction_img[np.where(predicted_class == 2)] = colors_dict[2]
-        
-        ax[0].imshow(np.uint8(img_arr[0, ...]))
-        ax[1].imshow(np.uint8(target_img))
-        ax[2].imshow(np.uint8(prediction_img))
+        f_name = os.path.splitext(f)[0]
+        print(f_name)
+        results[str(f_name)] = rle_encode(res)
+
+        if (to_show == True):
+            res = res * 255
+            f = plt.figure()
+            f.add_subplot(1,2, 1)
+            plt.imshow(img)
+            f.add_subplot(1,2, 2)
+            plt.imshow(np.reshape(res,(img_h,img_w)))
+            plt.show(block=True)
+
     
     create_csv (results,'')
     #print (results)
 
-def create_csv(results, results_dir='./'):
 
+def create_csv(results, results_dir='./'):
+    print ('creating csv..')
     csv_fname = 'results_'
     csv_fname += datetime.now().strftime('%b%d_%H-%M-%S') + '.csv'
 
-    with open(os.path.join(results_dir, csv_fname), 'w') as f:
+    with open(csv_fname, 'w') as f:
 
-        f.write('Id,Category\n')
+      f.write('ImageId,EncodedPixels,Width,Height\n')
 
-        for key, value in results.items():
-            f.write(key + ',' + str(value) + '\n')
-"""
+      for key, value in results.items():
+          f.write(key + ',' + str(value) + ',' + '256' + ',' + '256' + '\n')
+
+
+def rle_encode(img):
+      # Flatten column-wise
+      pixels = img.T.flatten()
+      pixels = np.concatenate([[0], pixels, [0]])
+      runs = np.where(pixels[1:] != pixels[:-1])[0] + 1
+      runs[1::2] -= runs[::2]
+      return ' '.join(str(x) for x in runs)
