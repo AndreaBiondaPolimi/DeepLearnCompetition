@@ -170,33 +170,45 @@ def load_dataset(img_h,img_w):
 
 """
 def test_model(model,to_show,img_h,img_w):
-    path = 'Classification_Dataset\\test'
-    model.load_weights('model00000111.h5')
-    #image_filenames = next(os.walk('../Classification_Dataset/test))[2]
+    path = "Segmentation_Dataset\\test"
+    
+    test_img_dir = os.path.join(test_dir, 'images', 'img')
 
     results = {}
-    for f in os.listdir(path):
-        #Image loading
-        ext = os.path.splitext(f)[1]
-        img = cv2.imread(os.path.join(path,f))
-        img = cv2.resize(img, (img_h, img_w))
+    for img_filename in img_filenames:
+    
+        mask_filename = img_filename[:-4] + '.png'
         
-        #Image preparation
-        img_array = img_to_array (img)
-        img_array = img_array / 255 
-        img_array = np.expand_dims(img_array, 0) 
-
-        #Image prediction
-        res = model.predict(img_array)
-        prediction = np.argmax(res) 
-
-        results[str(f)] = int(prediction)
-        #results = results + {str(f): int(prediction)}
-
-        if (to_show == True):
-            plt.imshow(np.uint8(img))
-            plt.title(class_list[prediction])
-            plt.show()
+        img = Image.open(os.path.join(test_img_dir, img_filename))
+        
+        img_arr = np.expand_dims(np.array(img), 0)
+        
+        out_softmax = model.predict(x=img_arr / 255.)
+        
+        # Get predicted class as the index corresponding to the maximum value in the vector probability
+        predicted_class = tf.argmax(out_softmax, -1)
+        predicted_class = predicted_class[0]
+        
+        target = np.array(mask)
+        target -= 1    ## to get classes 0,1,2 instead of 1,2,3
+        
+        print(target.shape)
+        
+        # Assign colors (just for visualization)
+        target_img = np.zeros([target.shape[0], target.shape[1], 3])
+        prediction_img = np.zeros([target.shape[0], target.shape[1], 3])
+        
+        target_img[np.where(target == 0)] = colors_dict[0]
+        target_img[np.where(target == 1)] = colors_dict[1]
+        target_img[np.where(target == 2)] = colors_dict[2]
+        
+        prediction_img[np.where(predicted_class == 0)] = colors_dict[0]
+        prediction_img[np.where(predicted_class == 1)] = colors_dict[1]
+        prediction_img[np.where(predicted_class == 2)] = colors_dict[2]
+        
+        ax[0].imshow(np.uint8(img_arr[0, ...]))
+        ax[1].imshow(np.uint8(target_img))
+        ax[2].imshow(np.uint8(prediction_img))
     
     create_csv (results,'')
     #print (results)
