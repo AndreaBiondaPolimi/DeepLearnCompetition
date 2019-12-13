@@ -11,7 +11,7 @@ from datetime import datetime
 
 
 
-def load_dataset(img_h, img_w, batch_size):
+def load_dataset(img_h, img_w, batch_size, preprocess_type='None'):
     # Set the seed for random operations. 
     # This let our experiments to be reproducible. 
     SEED = 1234
@@ -26,28 +26,49 @@ def load_dataset(img_h, img_w, batch_size):
     #number of classes
     num_classes=2
 
-    train_img_data_gen = ImageDataGenerator(rotation_range=10,
-                                            width_shift_range=10,
-                                            height_shift_range=10,
-                                            zoom_range=0.3,
-                                            horizontal_flip=True,
-                                            vertical_flip=True,
-                                            fill_mode='constant',
-                                            cval=0,
-                                            validation_split=0.2,
-                                            rescale=1./255)
+    if (preprocess_type=='none'):
+        train_img_data_gen = ImageDataGenerator(rotation_range=2,
+                                                width_shift_range=2,
+                                                height_shift_range=2,
+                                                zoom_range=0.3,
+                                                horizontal_flip=True,
+                                                vertical_flip=True,
+                                                fill_mode='reflect',
+                                                cval=0,
+                                                validation_split=0.2,
+                                                rescale=1./255)
+    else:
+        from tensorflow.keras.models import model_from_json
+        if (preprocess_type == 'resnet50'):
+            from tensorflow.keras.applications.resnet50 import preprocess_input
+        if (preprocess_type == 'mobilenet'):
+            from tensorflow.keras.applications.mobilenet import preprocess_input
+
+        train_img_data_gen = ImageDataGenerator(rotation_range=2,
+                                                width_shift_range=2,
+                                                height_shift_range=2,
+                                                zoom_range=0.3,
+                                                horizontal_flip=True,
+                                                vertical_flip=True,
+                                                fill_mode='reflect',
+                                                cval=0,
+                                                validation_split=0.2,
+                                                preprocessing_function=preprocess_input)   
+        
 
 
-    train_mask_data_gen = ImageDataGenerator(rotation_range=10,
-                                             width_shift_range=10,
-                                             height_shift_range=10,
+    train_mask_data_gen = ImageDataGenerator(rotation_range=2,
+                                             width_shift_range=2,
+                                             height_shift_range=2,
                                              zoom_range=0.3,
                                              horizontal_flip=True,
                                              vertical_flip=True,
-                                             fill_mode='constant',
+                                             fill_mode='reflect',
                                              cval=0,
                                              validation_split=0.2,
                                              rescale=1./255)
+
+
 
     # Training
     # Two different generators for images and masks
@@ -165,7 +186,7 @@ def load_dataset(img_h, img_w, batch_size):
 
 
 
-def test_model(model,to_show,img_h,img_w):
+def test_model(model, to_show, img_h, img_w, preprocess_type='none'):
     path = 'Segmentation_Dataset\\test\\images\\img'
     model.load_weights('check.h5')
 
@@ -179,8 +200,19 @@ def test_model(model,to_show,img_h,img_w):
 
         #Image preparation
         img_array = img_to_array (img)
-        img_array = img_array / 255 
         img_array = np.expand_dims(img_array, 0) 
+
+
+        if (preprocess_type=='none'):
+            img_array = img_array / 255 
+        else:
+            if (preprocess_type == 'mobilenet'):
+                from tensorflow.keras.applications.mobilenet import preprocess_input
+            if (preprocess_type == 'resnet50'):
+                from tensorflow.keras.applications.resnet50 import preprocess_input
+
+            img_arr = preprocess_input(img_arr)
+
 
         #Image prediction
         res = model.predict(img_array)

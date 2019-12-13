@@ -11,6 +11,18 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras import backend as K
 
 
+
+def get_segmentation_model (preprocess_type = 'none', pretrained_weights = None , input_size = (256,256,3)):
+    if (preprocess_type=='none'):
+        return unet_model (pretrained_weights, input_size)
+    
+    if (preprocess_type=='resnet50'):
+        return resent_seg_model(input_size)
+
+    if (preprocess_type=='mobilenet'):
+        return mobilenet_seg_model(input_size)
+
+
 def unet_model(pretrained_weights = None,input_size = (256,256,3)):
     inputs = Input(input_size)
     conv1 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(inputs)
@@ -67,7 +79,7 @@ def unet_model(pretrained_weights = None,input_size = (256,256,3)):
 
 
 
-from keras.models import model_from_json
+from tensorflow.keras.models import model_from_json
 from tensorflow.keras.applications import ResNet50
 def resent_seg_model(input_size = (256,256,3)):
     model = ResNet50(input_shape=input_size, weights='imagenet', include_top=False)
@@ -113,7 +125,7 @@ def resent_seg_model(input_size = (256,256,3)):
     return model
 
 
-from keras.models import model_from_json
+from tensorflow.keras.models import model_from_json
 from tensorflow.keras.applications import MobileNet
 def mobilenet_seg_model(input_size = (256,256,3)):
     model = MobileNet(input_shape=input_size, weights='imagenet', include_top=False)
@@ -168,20 +180,23 @@ def train (model, train_dataset, valid_dataset, epochs):
     callbacks = []
 
     #es_callback = EarlyStopping(monitor='val_loss', patience=70)
-    checkpoint = ModelCheckpoint(filepath='check.h5', monitor='val_loss',mode='min', period=1, save_best_only=True) 
+    checkpoint_loss = ModelCheckpoint(filepath='check_val_loss.h5', monitor='val_loss',mode='min', period=1, save_best_only=True) 
+    checkpoint_iou = ModelCheckpoint(filepath='check_val_iou.h5', monitor='val_my_IoU',mode='max', period=1, save_best_only=True) 
+
 
     #callbacks.append(es_callback)
-    callbacks.append(checkpoint)
+    callbacks.append(checkpoint_loss)
+    callbacks.append(checkpoint_iou)
 
 
     model.fit(x=train_dataset,
           epochs=epochs,  #### set repeat in training dataset
-          steps_per_epoch=200,
+          steps_per_epoch=300,
           validation_data=valid_dataset,
-          validation_steps=50,
+          validation_steps=80,
           callbacks=callbacks)
 
-    model.save('classification_1.h5')
+    model.save('classification_resnet.h5')
 
 
 

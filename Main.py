@@ -5,12 +5,14 @@ img_h=256
 img_w=256
 batch_size=8
 
-#train, valid = util.load_dataset(img_h,img_w,batch_size)
+preprocess_type = 'resnet50' #resnet50 encoder preporcessing + unet decoder
+#preprocess_type = 'mobilenet' #mobilenet encoder preporcessing + unet decoder
+#preprocess_type = 'none' #unet model without preprocessing
 
-#model = seg.unet_model(pretrained_weights='check.h5')
-model = seg.resent_seg_model()
-#model = seg.mobilenet_seg_model()
+train, valid = util.load_dataset(img_h,img_w,batch_size,preprocess_type)
 
-#seg.train(model, train, valid, 40)
+model = seg.get_segmentation_model(preprocess_type=preprocess_type)
 
-util.test_model(model,False,img_h,img_w)
+seg.train(model, train, valid, 40)
+
+util.test_model(model,True,img_h,img_w,preprocess_type)
