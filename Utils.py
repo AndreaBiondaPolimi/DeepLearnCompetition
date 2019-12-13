@@ -95,7 +95,6 @@ def load_dataset(img_h, img_w, batch_size):
                                                          interpolation='bilinear',
                                                          seed=SEED,
                                                          subset='validation')
-
     
 
                                          
@@ -120,8 +119,8 @@ def load_dataset(img_h, img_w, batch_size):
     valid_dataset = valid_dataset.map(prepare_target)
     valid_dataset = valid_dataset.repeat()
 
-    """
     
+    """
     iterator = iter(train_dataset)
     
     for _ in range(3):
@@ -168,7 +167,7 @@ def load_dataset(img_h, img_w, batch_size):
 
 def test_model(model,to_show,img_h,img_w):
     path = 'Segmentation_Dataset\\test\\images\\img'
-    model.load_weights('classification.h5')
+    model.load_weights('check.h5')
 
     results = {}
 

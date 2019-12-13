@@ -4,10 +4,11 @@ import numpy as np
 import tensorflow as tf
 
 from tensorflow.keras.models import Sequential, Model
-from tensorflow.keras.layers import Conv2D, Dense, MaxPool2D, Dropout, Flatten, BatchNormalization, Activation, add, ZeroPadding2D
+from tensorflow.keras.layers import Conv2D, Dense, MaxPool2D, Dropout, Flatten, BatchNormalization, Activation, add, ZeroPadding2D, Conv2DTranspose
 from tensorflow.keras.layers import Input, GlobalAveragePooling2D, MaxPooling2D, concatenate, UpSampling2D
 from tensorflow.keras.optimizers import Adam, RMSprop
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from tensorflow.keras import backend as K
 
 
 def unet_model(pretrained_weights = None,input_size = (256,256,3)):
@@ -30,22 +31,22 @@ def unet_model(pretrained_weights = None,input_size = (256,256,3)):
     conv5 = Conv2D(1024, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv5)
     drop5 = Dropout(0.5)(conv5)
 
-    up6 = Conv2D(512, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(drop5))
+    up6 = Conv2D(512, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(drop5))
     merge6 = concatenate([drop4,up6], axis = 3)
     conv6 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge6)
     conv6 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv6)
 
-    up7 = Conv2D(256, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(conv6))
+    up7 = Conv2D(256, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(conv6))
     merge7 = concatenate([conv3,up7], axis = 3)
     conv7 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge7)
     conv7 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv7)
 
-    up8 = Conv2D(128, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(conv7))
+    up8 = Conv2D(128, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(conv7))
     merge8 = concatenate([conv2,up8], axis = 3)
     conv8 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge8)
     conv8 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv8)
 
-    up9 = Conv2D(64, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(conv8))
+    up9 = Conv2D(64, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(conv8))
     merge9 = concatenate([conv1,up9], axis = 3)
     conv9 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge9)
     conv9 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv9)
@@ -54,7 +55,8 @@ def unet_model(pretrained_weights = None,input_size = (256,256,3)):
 
     model = Model(inputs, conv10)
 
-    model.compile(optimizer = Adam(lr = 1e-4), loss = 'binary_crossentropy', metrics=[my_IoU])
+    #model.compile(optimizer = Adam(lr = 1e-4), loss = 'binary_crossentropy', metrics=[my_IoU])
+    model.compile(optimizer = Adam(lr = 1e-4), loss = dice_coef_loss, metrics=[my_IoU])
     
     model.summary()
 
@@ -65,25 +67,121 @@ def unet_model(pretrained_weights = None,input_size = (256,256,3)):
 
 
 
+from keras.models import model_from_json
+from tensorflow.keras.applications import ResNet50
+def resent_seg_model(input_size = (256,256,3)):
+    model = ResNet50(input_shape=input_size, weights='imagenet', include_top=False)
+
+    x = model.output
+
+    up6 = Conv2D(1024, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(x))
+    #merge6 = concatenate([drop4,up6], axis = 3)
+    conv6 = Conv2D(1024, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(up6)
+    conv6 = Conv2D(1024, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv6)
+
+    up7 = Conv2D(512, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(conv6))
+    #merge7 = concatenate([conv3,up7], axis = 3)
+    conv7 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(up7)
+    conv7 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv7)
+
+    up8 = Conv2D(256, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(conv7))
+    #merge8 = concatenate([conv2,up8], axis = 3)
+    conv8 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(up8)
+    conv8 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv8)
+
+    up9 = Conv2D(128, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(conv8))
+    #merge9 = concatenate([conv1,up9], axis = 3)
+    conv9 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(up9)
+    conv9 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv9)
+    
+    up10 = Conv2D(64, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(conv9))
+    #merge9 = concatenate([conv1,up9], axis = 3)
+    conv10 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(up10)
+    conv10 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv10)
+    
+    
+    conv10 = Conv2D(2, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv10)
+    conv10 = Conv2D(1, 1, activation = 'sigmoid')(conv10)
+
+    model = Model(inputs=model.input, outputs=conv10)
+
+    model.compile(optimizer = Adam(lr = 1e-4), loss = 'binary_crossentropy', metrics=[my_IoU])
+    #model.compile(optimizer = Adam(lr = 1e-4), loss = dice_coef_loss, metrics=[my_IoU])
+
+    model.summary()
+
+    return model
+
+
+from keras.models import model_from_json
+from tensorflow.keras.applications import MobileNet
+def mobilenet_seg_model(input_size = (256,256,3)):
+    model = MobileNet(input_shape=input_size, weights='imagenet', include_top=False)
+
+    x = model.output
+
+    up6 = Conv2D(512, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(x))
+    #merge6 = concatenate([drop4,up6], axis = 3)
+    conv6 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(up6)
+    conv6 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv6)
+
+    up7 = Conv2D(256, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(conv6))
+    #merge7 = concatenate([conv3,up7], axis = 3)
+    conv7 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(up7)
+    conv7 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv7)
+
+    up8 = Conv2D(128, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(conv7))
+    #merge8 = concatenate([conv2,up8], axis = 3)
+    conv8 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(up8)
+    conv8 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv8)
+
+    up9 = Conv2D(64, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(conv8))
+    #merge9 = concatenate([conv1,up9], axis = 3)
+    conv9 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(up9)
+    conv9 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv9)
+    
+    up10 = Conv2D(32, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(conv9))
+    #merge9 = concatenate([conv1,up9], axis = 3)
+    conv10 = Conv2D(32, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(up10)
+    conv10 = Conv2D(32, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv10)
+    
+    
+    conv10 = Conv2D(2, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv10)
+    conv10 = Conv2D(1, 1, activation = 'sigmoid')(conv10)
+
+    model = Model(inputs=model.input, outputs=conv10)
+
+    model.compile(optimizer = Adam(lr = 1e-4), loss = 'binary_crossentropy', metrics=[my_IoU])
+    #model.compile(optimizer = Adam(lr = 1e-4), loss = dice_coef_loss, metrics=[my_IoU])
+
+    model.summary()
+
+    return model
+
+
+
+
+
+
 
 def train (model, train_dataset, valid_dataset, epochs):
     callbacks = []
 
-    es_callback = EarlyStopping(monitor='val_loss', patience=70)
-    #checkpoint = ModelCheckpoint('model{epoch:08d}.h5', period=1) 
+    #es_callback = EarlyStopping(monitor='val_loss', patience=70)
+    checkpoint = ModelCheckpoint(filepath='check.h5', monitor='val_loss',mode='min', period=1, save_best_only=True) 
 
-    callbacks.append(es_callback)
-    #callbacks.append(checkpoint)
+    #callbacks.append(es_callback)
+    callbacks.append(checkpoint)
 
 
     model.fit(x=train_dataset,
           epochs=epochs,  #### set repeat in training dataset
-          steps_per_epoch=50,
+          steps_per_epoch=200,
           validation_data=valid_dataset,
-          validation_steps=20,
+          validation_steps=50,
           callbacks=callbacks)
 
-    model.save('classification.h5')
+    model.save('classification_1.h5')
 
 
 
@@ -98,3 +196,95 @@ def my_IoU(y_true, y_pred):
     union = tf.reduce_sum(y_true) + tf.reduce_sum(y_pred) - intersection
     # IoU
     return intersection / union
+
+
+def comp_score(y_true, y_pred):
+    score = my_IoU(y_true,y_pred)
+    thresholds = np.arange(0.5, 1.0, 0.05)
+    competition_score = 0
+
+    for t in thresholds:
+        if score > t:
+            competition_score += 1
+
+    competition_score /= len(thresholds)
+
+    return competition_score
+
+
+
+
+def dice_coef(y_true, y_pred):
+    """
+    Dice = (2*|X & Y|)/ (|X|+ |Y|)
+         =  2*sum(|A*B|)/(sum(A^2)+sum(B^2))
+    ref: https://arxiv.org/pdf/1606.04797v1.pdf
+    """
+    y_pred =  K.cast(y_pred, dtype='float32')
+    y_true =  K.cast(y_true, dtype='float32')
+    intersection = K.sum(K.abs(y_true * y_pred), axis=-1)
+    return (2. * intersection + 1) / (K.sum(K.square(y_true),-1) + K.sum(K.square(y_pred),-1) + 1)
+
+def dice_coef_loss(y_true, y_pred):
+    return 1-dice_coef(y_true, y_pred)
+
+
+
+
+
+
+
+
+
+
+"""def unet_model_mod(pretrained_weights = None,input_size = (256,256,3)):
+    inputs = Input(input_size)
+    conv1 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(inputs)
+    conv1_d = Conv2D(64, 3, activation = 'relu', padding = 'same', strides=2, kernel_initializer = 'he_normal')(conv1)
+    
+    conv2 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv1_d)
+    conv2_d = Conv2D(128, 3, activation = 'relu', padding = 'same', strides=2, kernel_initializer = 'he_normal')(conv2)
+    
+    conv3 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv2_d)
+    conv3_d = Conv2D(256, 3, activation = 'relu', padding = 'same', strides=2, kernel_initializer = 'he_normal')(conv3)
+    
+    conv4 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv3_d)
+    conv4_d = Conv2D(512, 3, activation = 'relu', padding = 'same', strides=2, kernel_initializer = 'he_normal')(conv4)
+    drop4 = Dropout(0.5)(conv4_d)
+
+
+    
+    up6 = Conv2DTranspose(512, 2, activation = 'relu', padding = 'same', strides=2 , kernel_initializer = 'he_normal')(drop4)
+    merge6 = concatenate([conv4,up6], axis = 3)
+    conv6 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge6)
+    conv6 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv6)
+
+    up7 = Conv2DTranspose(256, 2, activation = 'relu', padding = 'same', strides=2, kernel_initializer = 'he_normal')(conv6)
+    merge7 = concatenate([conv3,up7], axis = 3)
+    conv7 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge7)
+    conv7 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv7)
+
+    up8 = Conv2DTranspose(128, 2, activation = 'relu', padding = 'same',strides=2, kernel_initializer = 'he_normal')(conv7)
+    merge8 = concatenate([conv2,up8], axis = 3)
+    conv8 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge8)
+    conv8 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv8)
+
+    up9 = Conv2DTranspose(64, 2, activation = 'relu', padding = 'same', strides=2, kernel_initializer = 'he_normal')(conv8)
+    merge9 = concatenate([conv1,up9], axis = 3)
+    conv9 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge9)
+    conv9 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv9)
+    #conv9 = Conv2D(2, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv9)
+    conv10 = Conv2D(1, 1, activation = 'sigmoid')(conv9)
+
+
+    model = Model(inputs, conv10)
+
+    #model.compile(optimizer = Adam(lr = 5e-5), loss = 'binary_crossentropy', metrics=[my_IoU,comp_score])
+    model.compile(optimizer = Adam(lr = 5e-5), loss = 'binary_crossentropy', metrics=[my_IoU,comp_score])
+    
+    model.summary()
+
+    if(pretrained_weights):
+    	model.load_weights(pretrained_weights)
+
+    return model"""
