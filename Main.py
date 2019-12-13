@@ -9,10 +9,12 @@ preprocess_type = 'resnet50' #resnet50 encoder preporcessing + unet decoder
 #preprocess_type = 'mobilenet' #mobilenet encoder preporcessing + unet decoder
 #preprocess_type = 'none' #unet model without preprocessing
 
-train, valid = util.load_dataset(img_h,img_w,batch_size,preprocess_type)
+
+
+#train, valid = util.load_dataset(img_h,img_w,batch_size,preprocess_type)
 
 model = seg.get_segmentation_model(preprocess_type=preprocess_type)
 
-seg.train(model, train, valid, 40)
+#seg.train(model, train, valid, 40)
 
-util.test_model(model,True,img_h,img_w,preprocess_type)
+util.test_model(model,False,img_h,img_w,preprocess_type)

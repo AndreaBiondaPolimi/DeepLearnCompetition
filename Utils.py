@@ -188,7 +188,7 @@ def load_dataset(img_h, img_w, batch_size, preprocess_type='None'):
 
 def test_model(model, to_show, img_h, img_w, preprocess_type='none'):
     path = 'Segmentation_Dataset\\test\\images\\img'
-    model.load_weights('check.h5')
+    model.load_weights('check_val_loss.h5')
 
     results = {}
 
@@ -211,7 +211,7 @@ def test_model(model, to_show, img_h, img_w, preprocess_type='none'):
             if (preprocess_type == 'resnet50'):
                 from tensorflow.keras.applications.resnet50 import preprocess_input
 
-            img_arr = preprocess_input(img_arr)
+            img_array = preprocess_input(img_array)
 
 
         #Image prediction
