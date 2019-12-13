@@ -86,24 +86,43 @@ def resent_seg_model(input_size = (256,256,3)):
 
     x = model.output
 
+    encoder = Model(inputs=model.input, outputs=x)
+
+    """
+    for layer in encoder.layers:
+        print (layer.output)
+        print (layer.name)
+    
+    layer_output = encoder.get_layer('conv5_block3_3_bn').output
+    print ()
+    print ()
+    print (layer_output)
+    return
+    """
+    skip_layer_1 = encoder.get_layer('conv1_relu').output
+    skip_layer_2 = encoder.get_layer('conv2_block3_out').output
+    skip_layer_3 = encoder.get_layer('conv3_block4_out').output
+    skip_layer_4 = encoder.get_layer('conv4_block6_out').output
+
+
     up6 = Conv2D(1024, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(x))
-    #merge6 = concatenate([drop4,up6], axis = 3)
-    conv6 = Conv2D(1024, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(up6)
+    merge6 = concatenate([skip_layer_4 , up6], axis = 3)
+    conv6 = Conv2D(1024, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge6)
     conv6 = Conv2D(1024, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv6)
 
     up7 = Conv2D(512, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(conv6))
-    #merge7 = concatenate([conv3,up7], axis = 3)
-    conv7 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(up7)
+    merge7 = concatenate([skip_layer_3,up7], axis = 3)
+    conv7 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge7)
     conv7 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv7)
 
     up8 = Conv2D(256, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(conv7))
-    #merge8 = concatenate([conv2,up8], axis = 3)
-    conv8 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(up8)
+    merge8 = concatenate([skip_layer_2,up8], axis = 3)
+    conv8 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge8)
     conv8 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv8)
 
     up9 = Conv2D(128, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(conv8))
-    #merge9 = concatenate([conv1,up9], axis = 3)
-    conv9 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(up9)
+    merge9 = concatenate([skip_layer_1,up9], axis = 3)
+    conv9 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge9)
     conv9 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv9)
     
     up10 = Conv2D(64, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(conv9))
@@ -132,24 +151,43 @@ def mobilenet_seg_model(input_size = (256,256,3)):
 
     x = model.output
 
+    encoder = Model(inputs=model.input, outputs=x)
+
+    """
+    for layer in encoder.layers:
+        print (layer.output)
+        #print (layer.name)
+    
+    layer_output = encoder.get_layer('conv5_block3_3_bn').output
+    print ()
+    print ()
+    print (layer_output)
+    return
+    """
+    
+    skip_layer_1 = encoder.get_layer('conv_pw_1_relu').output
+    skip_layer_2 = encoder.get_layer('conv_pw_3_relu').output
+    skip_layer_3 = encoder.get_layer('conv_pw_5_relu').output
+    skip_layer_4 = encoder.get_layer('conv_pw_11_relu').output
+
     up6 = Conv2D(512, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(x))
-    #merge6 = concatenate([drop4,up6], axis = 3)
-    conv6 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(up6)
+    merge6 = concatenate([skip_layer_4,up6], axis = 3)
+    conv6 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge6)
     conv6 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv6)
 
     up7 = Conv2D(256, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(conv6))
-    #merge7 = concatenate([conv3,up7], axis = 3)
-    conv7 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(up7)
+    merge7 = concatenate([skip_layer_3,up7], axis = 3)
+    conv7 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge7)
     conv7 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv7)
 
     up8 = Conv2D(128, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(conv7))
-    #merge8 = concatenate([conv2,up8], axis = 3)
-    conv8 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(up8)
+    merge8 = concatenate([skip_layer_2,up8], axis = 3)
+    conv8 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge8)
     conv8 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv8)
 
     up9 = Conv2D(64, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(conv8))
-    #merge9 = concatenate([conv1,up9], axis = 3)
-    conv9 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(up9)
+    merge9 = concatenate([skip_layer_1,up9], axis = 3)
+    conv9 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge9)
     conv9 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv9)
     
     up10 = Conv2D(32, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2), interpolation='bilinear')(conv9))
