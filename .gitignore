@@ -7,5 +7,5 @@
 #ignore ide folders
 .vscode/
 
-#ignore complete imgs folders
-Classification_Dataset/complete
+#ignore huge dataset folder
+dataset_vqa/
