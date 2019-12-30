@@ -1,17 +1,18 @@
 import Utils as util
-import Segmentator as seg
 import sys
 import tensorflow as tf
 
-
-
-#preprocess_type = 'resnet50' #resnet50 encoder preporcessing + unet decoder
-#preprocess_type = 'mobilenet' #mobilenet encoder preporcessing + unet decoder
-#preprocess_type = 'none' #unet model without preprocessing
-
 def start ():
 
-    
-   
+    img_h=320
+    img_w=480
+    batch_size=8
+
+    #train, valid = util.load_dataset(img_h,img_w,batch_size,preprocess_type)
+    train, valid = util.load_dataset(img_h,img_w,batch_size)
+
+
+
+    #util.test_model(model,False,img_h,img_w,preprocess_type)
 
 start()
