@@ -9,17 +9,21 @@ def start ():
     img_w=480
     batch_size=8
 
-
     dl = DataLoader(img_h, img_w, batch_size)
 
     #train, valid = util.load_dataset(img_h,img_w,batch_size,preprocess_type)
     train, valid = dl.load_dataset()
     
-    #model = mod.img_model(input_shape=(img_h, img_w, 3))
+    num_words = len(dl.quest_wtoi)+1
+    seq_length = dl.max_qst_length
+    dropout_rate = 0.2
+    input_shape = (img_h, img_w, 3)
+    num_classes = 13
 
+    #model = mod.vqa_model(input_shape, num_words, seq_length, dropout_rate, num_classes)
 
-    mod.Word2VecModel(len(dl.quest_wtoi)+1, dl.max_qst_length, 0.2)
+    #mod.train(model, train, valid, 100, batch_size)
 
-    #util.test_model(model,False,img_h,img_w,preprocess_type)
+    dl.test_model()
 
 start()

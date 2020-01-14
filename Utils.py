@@ -5,6 +5,10 @@ import os, os.path
 import cv2
 import json
 from sklearn.model_selection import train_test_split
+import cv2
+from datetime import datetime
+
+from tensorflow.keras.preprocessing.image import img_to_array
 
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
@@ -22,7 +26,7 @@ class DataLoader:
         self.batch_size = batch_size
 
     def load_dataset(self,):
-        seed = 534
+        seed = 1691
         np.random.seed(seed)
         folder = 'dataset_vqa'
 
@@ -42,7 +46,7 @@ class DataLoader:
         valid_dataset = DatasetIterator(data_valid,self.img_h, self.img_w, folder + '\\train\\' , self.batch_size, 'none')
         valid_dataset = iter(valid_dataset)
 
-        
+        """
         for i in range (0, 3, 1):
             print ()
             [questions, images], answers = next(train_dataset)
@@ -77,7 +81,7 @@ class DataLoader:
             img = tf.dtypes.cast(img, tf.int32)
             plt.imshow(np.reshape (img, (320,480,3)))
             plt.show()
-        
+        """
 
         return train_dataset, valid_dataset
 
@@ -154,7 +158,61 @@ class DataLoader:
         return data
 
 
+    def test_model (self,model, to_show=False):
+        folder = 'dataset_vqa'
+        with open(folder + '/train_data.json', 'r') as f:
+            SUBSET_data = json.load(f)
+        f.close()
+
+        data = SUBSET_data['questions']
+
+        data = self.tokenizator (data)
+        
+        model.load_weights('model00000111.h5')
+        results = {}
+        for i in len(data):           
+            qst = data[i]['question']
+            qst_id = data[i]['question_id']
+            img_path = folder + '/test/' + data[i]['image_filename']
+
+            img = cv2.imread(img_path)
+            img = cv2.resize(img, (self.img_h, self.img_w))
+        
+            #Image preparation
+            img_array = img_to_array (img)
+            img_array = img_array / 255 
+            img_array = np.expand_dims(img_array, 0) 
+
+            #Image prediction
+            res = model.predict([img_array, qst])
+            prediction = np.argmax(res) 
+
+            results[str(qst_id)] = int(prediction)
+
+            if (to_show == True):
+                plt.imshow(np.uint8(img))
+                #plt.title(class_list[prediction])
+                plt.title(prediction)
+                plt.show()
     
+        self.create_csv (results,'')
+
+
+
+    def create_csv(self, results, results_dir='./'):
+        csv_fname = 'results_'
+        csv_fname += datetime.now().strftime('%b%d_%H-%M-%S') + '.csv'
+
+        with open(os.path.join(results_dir, csv_fname), 'w') as f:
+
+            f.write('Id,Category\n')
+
+            for key, value in results.items():
+                f.write(key + ',' + str(value) + '\n')
+
+
+
+
 
 
 class DatasetIterator:
@@ -201,16 +259,27 @@ class DatasetIterator:
 
             img = image.load_img(img_path, target_size=(self.img_h, self.img_w))
             img = np.expand_dims(image.img_to_array(img), axis=0)
-            #img = self.datagen.random_transform(img, self.seed)
 
             iterator =  self.datagen.flow(img, batch_size=1)
+
             b_img = next(iterator)
+
+            b_img = np.reshape (b_img, (320,480,3))
 
             questions.append(qst)
             images.append(b_img)
             answers.append(ans)
 
+        questions = np.asarray(questions)
+        images = np.asarray(images)
+        answers = np.asarray(answers)
+
+        from keras.utils import to_categorical
+        answers = to_categorical(answers, num_classes=13)
+
         return [questions, images] , answers
+
+
 
 
 
