@@ -33,12 +33,16 @@ class DataLoader:
         with open(folder + '/train_data.json', 'r') as f:
             SUBSET_data = json.load(f)
         f.close()
+        data_train = SUBSET_data['questions']
 
-        data = SUBSET_data['questions']
+        with open(folder + '/test_data.json', 'r') as f:
+            SUBSET_data = json.load(f)
+        f.close()
+        data_test = SUBSET_data['questions']
 
-        data = self.tokenizator (data)
+        self.data_for_train, self.data_for_test = self.tokenizator (data_train, data_test)
 
-        data_train, data_valid = train_test_split(data, test_size=0.2, random_state=seed)
+        data_train, data_valid = train_test_split(self.data_for_train, test_size=0.2, random_state=seed)
 
         train_dataset = DatasetIterator(data_train,self.img_h, self.img_w, folder + '\\train\\' , self.batch_size, 'none')
         train_dataset = iter(train_dataset)
@@ -85,106 +89,108 @@ class DataLoader:
 
         return train_dataset, valid_dataset
 
-    def tokenizator (self, data):
-        questions = []
-        for dt in data:
-            questions.append('<sos> ' + dt['question'] + ' <eos>')
+    def tokenizator (self, data_train, data_test):
+        questions_train = []
+        for dt in data_train:
+            questions_train.append('<sos> ' + dt['question'] + ' <eos>')
 
-        answers = []
-        for dt in data:
-            answers.append(dt['answer'])
+        answers_train = []
+        for dt in data_train:
+            answers_train.append(dt['answer'])
 
-        #Questions Tokenization
+        questions_test = []
+        for dt in data_test:
+            questions_test.append('<sos> ' + dt['question'] + ' <eos>')
+
+        #Question Tokenization
         quest_tokenizer = Tokenizer()
-        quest_tokenizer.fit_on_texts(questions)
-        questions_tokenized = quest_tokenizer.texts_to_sequences(questions)
-        max_qst_length = max(len(sentence) for sentence in questions_tokenized)
-        qst_encoder_inputs = pad_sequences(questions_tokenized, maxlen=max_qst_length)
+        quest_tokenizer.fit_on_texts(questions_train + questions_test)
         
+        questions_train_tokenized = quest_tokenizer.texts_to_sequences(questions_train)
+        questions_test_tokenized = quest_tokenizer.texts_to_sequences(questions_test)
+
+        #Question Padding
+        max_qst_length = max(len(sentence) for sentence in (questions_train_tokenized + questions_test_tokenized))
+        qst_train_encoder_inputs = pad_sequences(questions_train_tokenized, maxlen=max_qst_length)
+        qst_test_encoder_inputs = pad_sequences(questions_test_tokenized, maxlen=max_qst_length)
+
+        
+        #Saving model train parameters
         self.max_qst_length = max_qst_length
         self.quest_wtoi = quest_tokenizer.word_index
 
-        #Answers Tokenization
-        for i in range (len(answers)):
-            if (answers[i] == '0'):
-                answers[i] = 0
-            elif (answers[i] == '1'):
-                answers[i] = 1
-            elif (answers[i] == '10'):
-                answers[i] = 2
-            elif (answers[i] == '2'):
-                answers[i] = 3
-            elif (answers[i] == '3'):
-                answers[i] = 4
-            elif (answers[i] == '4'):
-                answers[i] = 5
-            elif (answers[i] == '5'):
-                answers[i] = 6
-            elif (answers[i] == '6'):
-                answers[i] = 7
-            elif (answers[i] == '7'):
-                answers[i] = 8
-            elif (answers[i] == '8'):
-                answers[i] = 9
-            elif (answers[i] == '9'):
-                answers[i] = 10
-            elif (answers[i] == 'no'):
-                answers[i] = 11
-            elif (answers[i] == 'yes'):
-                answers[i] = 12
+        #Answers Train Tokenization
+        for i in range (len(answers_train)):
+            if (answers_train[i] == '0'):
+                answers_train[i] = [1,0,0,0,0,0,0,0,0,0,0,0,0]
+            elif (answers_train[i] == '1'):
+                answers_train[i] = [0,1,0,0,0,0,0,0,0,0,0,0,0]
+            elif (answers_train[i] == '10'):
+                answers_train[i] = [0,0,1,0,0,0,0,0,0,0,0,0,0]
+            elif (answers_train[i] == '2'):
+                answers_train[i] = [0,0,0,1,0,0,0,0,0,0,0,0,0]
+            elif (answers_train[i] == '3'):
+                answers_train[i] = [0,0,0,0,1,0,0,0,0,0,0,0,0]
+            elif (answers_train[i] == '4'):
+                answers_train[i] = [0,0,0,0,0,1,0,0,0,0,0,0,0]
+            elif (answers_train[i] == '5'):
+                answers_train[i] = [0,0,0,0,0,0,1,0,0,0,0,0,0]
+            elif (answers_train[i] == '6'):
+                answers_train[i] = [0,0,0,0,0,0,0,1,0,0,0,0,0]
+            elif (answers_train[i] == '7'):
+                answers_train[i] = [0,0,0,0,0,0,0,0,1,0,0,0,0]
+            elif (answers_train[i] == '8'):
+                answers_train[i] = [0,0,0,0,0,0,0,0,0,1,0,0,0]
+            elif (answers_train[i] == '9'):
+                answers_train[i] = [0,0,0,0,0,0,0,0,0,0,1,0,0]
+            elif (answers_train[i] == 'no'):
+                answers_train[i] = [0,0,0,0,0,0,0,0,0,0,0,1,0]
+            elif (answers_train[i] == 'yes'):
+                answers_train[i] = [0,0,0,0,0,0,0,0,0,0,0,0,1]
             else:
                 raise ('Invalid Answer format')
 
-        #print (data[0]['question'])
-        #print (data[1]['question'])
-
-        for i in range (len(qst_encoder_inputs)):
-            data[i]['question'] = qst_encoder_inputs[i]
-
-        #print (data[0]['question'])
-        #print (data[1]['question'])
-
-        #print ()
-
-        #print (data[0]['answer'])
-        #print (data[1]['answer'])
+        #Save tokenized data
+        for i in range (len(qst_train_encoder_inputs)):
+            data_train[i]['question'] = qst_train_encoder_inputs[i]
         
-        for i in range (len(answers)):
-            data[i]['answer'] = answers[i]
+        for i in range (len(answers_train)):
+            data_train[i]['answer'] = answers_train[i]
 
-        #print (data[0]['answer'])
-        #print (data[1]['answer'])
+        for i in range (len(qst_test_encoder_inputs)):
+            data_test[i]['question'] = qst_test_encoder_inputs[i]
 
-        return data
+        return data_train, data_test
 
 
     def test_model (self,model, to_show=False):
         folder = 'dataset_vqa'
-        with open(folder + '/train_data.json', 'r') as f:
-            SUBSET_data = json.load(f)
-        f.close()
-
-        data = SUBSET_data['questions']
-
-        data = self.tokenizator (data)
+        data = self.data_for_test
         
-        model.load_weights('model00000111.h5')
+        model.load_weights('vqa_model_0.h5')
+
         results = {}
-        for i in len(data):           
+        for i in range(len(data)):           
             qst = data[i]['question']
             qst_id = data[i]['question_id']
             img_path = folder + '/test/' + data[i]['image_filename']
 
             img = cv2.imread(img_path)
-            img = cv2.resize(img, (self.img_h, self.img_w))
+            img = cv2.resize(img, (self.img_w, self.img_h))
+
         
             #Image preparation
             img_array = img_to_array (img)
             img_array = img_array / 255 
             img_array = np.expand_dims(img_array, 0) 
 
+            qst = np.asarray(qst)
+
+            print (qst)
+            print (qst.shape)
+
             #Image prediction
-            res = model.predict([img_array, qst])
+            res = model.predict([img_array, qst], batch_size=1)
             prediction = np.argmax(res) 
 
             results[str(qst_id)] = int(prediction)
@@ -192,7 +198,7 @@ class DataLoader:
             if (to_show == True):
                 plt.imshow(np.uint8(img))
                 #plt.title(class_list[prediction])
-                plt.title(prediction)
+                plt.title(qst + ' || ' + prediction)
                 plt.show()
     
         self.create_csv (results,'')
@@ -274,8 +280,8 @@ class DatasetIterator:
         images = np.asarray(images)
         answers = np.asarray(answers)
 
-        from keras.utils import to_categorical
-        answers = to_categorical(answers, num_classes=13)
+        #from keras.utils import to_categorical
+        #answers = to_categorical(answers, num_classes=13)
 
         return [questions, images] , answers
 

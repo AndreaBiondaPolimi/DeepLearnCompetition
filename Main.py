@@ -7,7 +7,7 @@ def start ():
 
     img_h=320
     img_w=480
-    batch_size=8
+    batch_size=2
 
     dl = DataLoader(img_h, img_w, batch_size)
 
@@ -20,10 +20,10 @@ def start ():
     input_shape = (img_h, img_w, 3)
     num_classes = 13
 
-    #model = mod.vqa_model(input_shape, num_words, seq_length, dropout_rate, num_classes)
+    model = mod.vqa_model(input_shape, num_words, seq_length, dropout_rate, num_classes)
 
     #mod.train(model, train, valid, 100, batch_size)
 
-    dl.test_model()
+    dl.test_model(model, True)
 
 start()

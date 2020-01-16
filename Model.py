@@ -73,10 +73,10 @@ def train (model, train_dataset, valid_dataset, epochs, batch_size):
     steps_per_epochs = 300
     validation_steps = 200
 
-    
+    best_accuracy = 0
 
-    for i in range (epochs):
-        print ('Epoch: ' + str(i) + '/' + str(epochs))
+    for epoch in range (epochs):
+        print ('Epoch: ' + str(epoch) + '/' + str(epochs))
         loss = 0
         accuracy = 0
 
@@ -117,17 +117,6 @@ def train (model, train_dataset, valid_dataset, epochs, batch_size):
 
             t_val.set_description('Valid_Accuracy: ' + str(accuracy_print))    
 
-
-
-        #loss = loss / steps_per_epochs
-        #accuracy = accuracy / steps_per_epochs
-        #print ('epochs ' + str(i) + ' of ' + str(epochs) + '---> loss ' + str(loss) + ' accuracy ' + str(accuracy))
-
-    """
-    model.fit(x=train_dataset,
-          epochs=epochs,  #### set repeat in training dataset
-          steps_per_epoch=300,
-          validation_data=valid_dataset,
-          validation_steps=200,
-          callbacks=callbacks)
-    """
+        if (accuracy_print > best_accuracy):
+            best_accuracy = accuracy_print
+            model.save_weights('vqa_model_epoch' + str(epoch) + '.h5')
